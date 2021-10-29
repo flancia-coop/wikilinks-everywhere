@@ -1,0 +1,41 @@
+{
+    "manifest_version": 2,
+    "name": "Agora",
+    "version": "1.2",
+    "description": "Resolves wikilinks within a specified context, by default anagora.org; also enables lookups in a context menu.",
+    "icons": {
+        "48": "icons/agora.png"
+    },
+    "permissions": [
+        "menus",
+        "storage",
+        "contextMenus"
+    ],
+    "background": {
+        "scripts": [
+            "polyfill.js",
+            "background.js"
+        ]
+    },
+    "content_scripts": [
+        {
+            "matches": [
+                "<all_urls>"
+            ],
+            "js": [
+                "polyfill.js",
+                "jquery.js",
+                "public/js/app.js"
+            ]
+        }
+    ],
+    "commands": {
+        "linkify": {
+            "suggested_key": {
+                "default": "Alt+Shift+L",
+                "linux": "Ctrl+Shift+L"
+            },
+            "description": "Send a 'linkify' event"
+        }
+    }
+}
