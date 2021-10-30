@@ -4,11 +4,9 @@ async function handleMsg(request, sender, sendResponse) {
     console.log("*** function handleMsg: sendResponse", sendResponse)
     await browser.contextMenus.removeAll()
     request.forEach(e => {
-        let slug = e[1].replace(/ /g, "-")
-        console.log("wiki link", e[0])
         browser.contextMenus.create({
-            id: slug,
-            title: e[0],
+            id: e,
+            title: e,
             contexts: ['page']
         })
     })

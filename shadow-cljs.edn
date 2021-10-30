@@ -6,7 +6,7 @@
 
  :dependencies
  []
-
+:jvm-opts ["-Xmx512M"]
  :builds
  {:extension {:target :browser 
-              :modules {:app {:init-fn app/main}}}}}
+              :modules {:app {:init-fn flancia.app/main}}}}}
