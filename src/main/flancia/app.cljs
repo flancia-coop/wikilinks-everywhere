@@ -5,9 +5,11 @@
 (def regexp #"\[\[(.*?)\]\]")
 
 (defn findPatternElements []
-  (if (= (.. js/window -location -hostname) "twitter.com")
+  (if (= (.-hostname js/window.location) "twitter.com")
     (-> (js/$ "span.css-901oao:contains([[)"))
-    (-> (js/$ "p:contains([[)"))))
+    (if (= (.-hostname js/window.location) "doc.anagora.org")
+      (-> (js/$ "div,li:contains([[)"))
+      (-> (js/$ "p:contains([[)")))))
 
 (defn discoverPatterns [element]
   (let [inner element.innerHTML
@@ -23,14 +25,16 @@
   (let [elements (findPatternElements)
         patterns (for [element elements]
                    (let [patterns (into-array (discoverPatterns element))]
-                     (.. js/console (log "patterns" patterns))
-                     patterns))
+                     (println element)
+                     (.log js/console "patterns" patterns)
+                     patterns)
+                   )
         p (clj->js (mapcat identity patterns))]
-    (. js/console (log "all patterns" p))
-    (.. js/browser -runtime  (sendMessage p))
-    (. js/console (log elements))))
+    (.log js/console "all patterns" p)
+    (.sendMessage js/browser.runtime  p)
+    (.log js/console elements)))
 
 (defn main []
-  (.. js/console (log "started"))
-  (.. js/window (addEventListener "click" parsePage))
-  (.. js/browser -storage -local (set #js {:agora agora})))
+  (.log js/console  "started")
+  (.addEventListener js/window "click" parsePage)
+  (.set js/browser.storage.local #js {:agora agora}))
