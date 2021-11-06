@@ -22,19 +22,24 @@
         slug))))
 
 (defn parsePage []
-  (let [elements (findPatternElements)
-        patterns (for [element elements]
-                   (let [patterns (into-array (discoverPatterns element))]
-                     (println element)
-                     (.log js/console "patterns" patterns)
-                     patterns)
-                   )
-        p (clj->js (mapcat identity patterns))]
-    (.log js/console "all patterns" p)
-    (.sendMessage js/browser.runtime  p)
-    (.log js/console elements)))
+  (let [enabled (.get js/browser.storage.local "enabled")]
+    (.then enabled
+           (fn [v]
+             (if (= v.enabled false)
+              ;; skip if not enabled
+               nil
+               (let [elements (findPatternElements)
+                     patterns (for [element elements]
+                                (let [patterns (into-array (discoverPatterns element))]
+                                  (println element)
+                                  (.log js/console "patterns" patterns)
+                                  patterns))
+                     p (clj->js (mapcat identity patterns))]
+                 (.log js/console "all patterns" p)
+                 (.sendMessage js/browser.runtime  p)
+                 (.log js/console elements)))))))
 
 (defn main []
   (.log js/console  "started")
   (.addEventListener js/window "click" parsePage)
-  (.set js/browser.storage.local #js {:agora agora}))
+  (.set js/browser.storage.local #js {:agora agora :enabled true}))

@@ -1,10 +1,12 @@
 {
     "manifest_version": 2,
     "name": "Agora",
-    "version": "1.2",
+    "version": "1.3",
     "description": "Resolves wikilinks within a specified context, by default anagora.org; also enables lookups in a context menu.",
     "icons": {
         "48": "icons/agora.png"
+    },
+    "browser_action": {
     },
     "permissions": [
         "menus",
