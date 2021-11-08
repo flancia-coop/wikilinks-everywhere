@@ -1,0 +1,50 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>WLE Test Page</title>
+</head>
+<body>
+    <h1>[[Wikilink]]</h1>
+    [[wikilink]] without a half good tag
+    <div>
+        [[wikilink]] in a div
+        <p>[[Wikilink]] in a div in a p</p>
+        <div>
+            <p>and a wikilink on it's own:</p>
+            <p>[[wikilink]]</p>
+        </div>
+    </div>
+    <div>
+        <ul>
+            <li>[[wp:wikipedia]]</li>
+            <li>[[wp:Utopian and dystopian fiction]]</li>
+            <li>[[google]]</li>
+            <li>[[Utopian and dystopian fiction]]</li>
+            <li>[[ag:Flancian]]</li>
+            <li>[[Flancian]]</li>
+        </ul>
+    </div>
+    <div>
+        <ul>
+            <li><a href="https://google.com">[[google]]</a></li>
+            <li><a href="https://google.com">[[google]] but it has other contents</a></li>
+        </ul>
+    </div>
+    <div>
+        <ul>
+            <li><span>[[</span><span>lala</span><span>]]</span></li>
+            <li><span>[[</span><span>lala</span><span>]]</span> but it has other contents</li>
+            <li><span>[[</span><span><a href="https://google.com"></a>lala</a></span><span>]]</span></li>
+        </ul>
+    </div>
+</body>
+
+<style>
+    * {
+        border: 1px solid red;
+    }
+</style>
+</html>

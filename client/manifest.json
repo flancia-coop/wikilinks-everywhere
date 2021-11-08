@@ -1,0 +1,20 @@
+{
+    "manifest_version": 2,
+    "name": "WikiLinks Everywhere",
+    "version": "1.2",
+    "description": "Resolves wikilinks within a specified context, by default anagora.org; also enables lookups in a context menu.",
+    "permissions": [
+        "storage",
+        "*://*/*"
+    ],
+    "background": {
+        "scripts": ["background.bundle.js"]
+    },
+    "content_scripts": [
+        {
+            "matches": ["http://*/*", "https://*/*"],
+            "js": ["main.bundle.js"],
+            "run_at": "document_idle"
+          }
+    ]
+}

@@ -1,7 +1,0 @@
-manifest.json
-polyfill.js
-jquery.js
-background.js
-public/js/app.js
-icons/agora.png
-src
