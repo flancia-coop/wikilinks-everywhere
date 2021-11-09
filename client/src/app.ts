@@ -1,10 +1,9 @@
 import browser from 'webextension-polyfill';
 
 async function buildAndTestUrl(url: string, page) {
-    url = url.replace('{path}', page);
-    var sending = await browser.runtime.sendMessage({ url: url })
-    console.log(url)
-    return [sending.response, url];
+    let nurl = url.replace('{path}', page)
+    var sending = await browser.runtime.sendMessage({ url: nurl })
+    return [sending.response, nurl];
 }
 
 let modes = {
@@ -17,16 +16,16 @@ let modes = {
             } else return url;
         } else return false;
     },
-    'Prefix': async function (opts, prefixes: [{ prefix: string, url: string }], node) {
+    'Prefix': async function (opts, prefixes: [{ prefix: string, url: string }], node: Node) {
         for (let prefix of prefixes) {
             if (node.nodeValue.startsWith(prefix.prefix)) {
-                let [status, url] = await buildAndTestUrl(prefix.url, node.nodeValue.replaceAll(prefix.prefix, ''));
+                let betterpath = node.nodeValue.replace(prefix.prefix, '');
+                let [status, url] = await buildAndTestUrl(prefix.url, betterpath);
                 if (status == 200) {
                     return url;
                 }
             }
-            return false;
-        }
+        } return false;
     },
     'IWLEP': function (opts, _prefixes, node) {
         return false
@@ -59,6 +58,7 @@ function walk(rootNode) {
 }
 
 async function fixNodes(v: Text) {
+    // TODO: find [[wikilinks]] even if not only thing in a element
     let arr: Array<{
         fn: Function,
         opts?: Array<any>,
@@ -75,12 +75,12 @@ async function fixNodes(v: Text) {
                 opts: [""],
                 main: [
                     {
-                        prefix: 'ag:',
-                        url: 'https://anagora.org/{path}'
-                    },
-                    {
                         prefix: 'wp:',
                         url: 'https://en.wikipedia.org/wiki/{path}'
+                    },
+                    {
+                        prefix: 'ag:',
+                        url: 'https://anagora.org/{path}'
                     }
                 ]
             },
@@ -102,22 +102,22 @@ async function fixNodes(v: Text) {
 
         ]
     if (!v.nodeValue.startsWith('[[') && !v.nodeValue.endsWith(']]')) return;
-    console.log('got match')
+    // TODO: Make this less depressing
+    // Make parent span than two sibling spans of [[]]
     v.nodeValue = v.nodeValue.replace('[[', '').replace(']]', '');
     for (let i = 0; i < arr.length; i++) {
         let res = await arr[i].fn(arr[i].opts, arr[i].main, v);
         if (res == false) {
-            console.debug(`failed i=${i}`)
             continue
         }
         else {
             if (v.parentNode instanceof HTMLAnchorElement) {
-                console.debug(`v.parentNode is a link`)
                 v.parentNode.href = res // don't change this to a continue
                                         // remember the children ;)
+                                        // what did this mean?
+                                        // write less confusing comments please
             }
             else {
-                console.debug(`v.parentNode is not a link`)
                 var parent = v.parentNode;
                 var wrapper = document.createElement('a');
                 wrapper.href = res
@@ -127,6 +127,7 @@ async function fixNodes(v: Text) {
                 wrapper.appendChild(v);
             }
         }
+        break;
     }
     return v;
 }
