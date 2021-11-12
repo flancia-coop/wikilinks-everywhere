@@ -2,7 +2,7 @@ import browser from 'webextension-polyfill';
 
 async function buildAndTestUrl(url: string, page) {
     let nurl = url.replace('{path}', page)
-    var sending = await browser.runtime.sendMessage({ url: nurl })
+    let sending = await browser.runtime.sendMessage({ url: nurl })
     return [sending.response, nurl];
 }
 
@@ -11,9 +11,8 @@ let modes = {
         if (node.parentNode instanceof HTMLAnchorElement) {
             let pnode: HTMLAnchorElement = node.parentNode;
             let [status, url] = await buildAndTestUrl(pnode.href, '');
-            if (status != 200) {
-                return false
-            } else return url;
+            if (status != 200) return false
+            else return url;
         } else return false;
     },
     'Prefix': async function (opts, prefixes: [{ prefix: string, url: string }], node: Node) {
@@ -33,9 +32,7 @@ let modes = {
     'Unprefixed': async function (opts, urls: [string], node) {
         for (let url of urls) {
             let [status, turl] = await buildAndTestUrl(url, node.nodeValue);
-            if (status == 200) {
-                return turl;
-            }
+            if (status == 200) return turl;
         } return false;
     },
     'Nothing': function (_opts, _prefixes, node) {
@@ -45,19 +42,40 @@ let modes = {
 
 function walk(rootNode) {
     // Find all the text nodes in rootNode
-    var walker = document.createTreeWalker(
+    let walker = document.createTreeWalker(
         rootNode,
         NodeFilter.SHOW_TEXT,
         null,
     ),
         node;
-    // Modify each text node's value
+        fixNodes(walker);
+}
+
+async function fixNodes(walker: TreeWalker) {
+    let nodes = [],
+        node: Text;
+    // @ts-expect-error
     while (node = walker.nextNode()) {
-        node = fixNodes(node);
+        nodes.push(node);
+    }
+    // @ts-expect-error
+    for (node in nodes) {
+
+        node = nodes[node]
+        let pelm: Element = node.parentElement
+
+        if (node.parentElement == null) {
+            continue;
+        }
+        if (node.nodeValue.includes('[[') && node.nodeValue.includes(']]')) {
+
+            node.parentElement.innerHTML = node.parentElement.innerHTML.replace(/\[\[(.*?)\]\]/g,'<span><span>[[</span><span class="wikilink">$1</span><span>]]</span></span>');
+            linkNodes(pelm.querySelector('span.wikilink').firstChild);
+        }
     }
 }
 
-async function fixNodes(v: Text) {
+async function linkNodes(v: Text) {
     // TODO: find [[wikilinks]] even if not only thing in a element
     let arr: Array<{
         fn: Function,
@@ -81,6 +99,22 @@ async function fixNodes(v: Text) {
                     {
                         prefix: 'ag:',
                         url: 'https://anagora.org/{path}'
+                    },
+                    {
+                        prefix: 'r/',
+                        url: 'https://reddit.com/r/{path}'
+                    },
+                    {
+                        prefix: 'g:',
+                        url: 'https://google.com/search?q={path}'
+                    },
+                    {
+                        prefix: 'yt:',
+                        url: 'https://youtube.com/results?search_query={path}'
+                    },
+                    {
+                        prefix: 'ddg:',
+                        url: 'https://duckduckgo.com/?q={path}'
                     }
                 ]
             },
@@ -101,12 +135,13 @@ async function fixNodes(v: Text) {
             }
 
         ]
-    if (!v.nodeValue.startsWith('[[') && !v.nodeValue.endsWith(']]')) return;
-    // TODO: Make this less depressing
-    // Make parent span than two sibling spans of [[]]
-    v.nodeValue = v.nodeValue.replace('[[', '').replace(']]', '');
     for (let i = 0; i < arr.length; i++) {
-        let res = await arr[i].fn(arr[i].opts, arr[i].main, v);
+        let res;
+        try {
+            res = await arr[i].fn(arr[i].opts, arr[i].main, v);
+        } catch (e) {
+            console.error(e);
+        }
         if (res == false) {
             continue
         }
@@ -118,13 +153,11 @@ async function fixNodes(v: Text) {
                                         // write less confusing comments please
             }
             else {
-                var parent = v.parentNode;
-                var wrapper = document.createElement('a');
-                wrapper.href = res
-                // set the wrapper as child (instead of the element)
-                parent.replaceChild(wrapper, v);
-                // set v as child of wrapper
+                let parent = v.parentNode;
+                let wrapper = document.createElement('a');
+                wrapper.href = res;
                 wrapper.appendChild(v);
+                console.log(wrapper);
             }
         }
         break;
@@ -142,7 +175,7 @@ function isForbiddenNode(node) {
 
 // The callback used for the document body and title observers
 function observerCallback(mutations) {
-    var i, node;
+    let i, node;
 
     mutations.forEach(function (mutation) {
         for (i = 0; i < mutation.addedNodes.length; i++) {
