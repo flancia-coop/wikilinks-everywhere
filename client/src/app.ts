@@ -36,7 +36,7 @@ let modes = {
         } return false;
     },
     'Nothing': function (_opts, _prefixes, node) {
-        return false;
+        return "https://google.com";
     }
 }
 
@@ -48,7 +48,7 @@ function walk(rootNode) {
         null,
     ),
         node;
-        fixNodes(walker);
+    fixNodes(walker);
 }
 
 async function fixNodes(walker: TreeWalker) {
@@ -58,18 +58,16 @@ async function fixNodes(walker: TreeWalker) {
     while (node = walker.nextNode()) {
         nodes.push(node);
     }
-    // @ts-expect-error
-    for (node in nodes) {
+    let pelm: Element;
+    for (node of nodes) {
 
-        node = nodes[node]
-        let pelm: Element = node.parentElement
+        pelm = node.parentElement
 
         if (node.parentElement == null) {
             continue;
         }
         if (node.nodeValue.includes('[[') && node.nodeValue.includes(']]')) {
-
-            node.parentElement.innerHTML = node.parentElement.innerHTML.replace(/\[\[(.*?)\]\]/g,'<span><span>[[</span><span class="wikilink">$1</span><span>]]</span></span>');
+            node.parentElement.innerHTML = node.parentElement.innerHTML.replace(/\[\[(.*?)\]\]/g, '<span><span>[[</span><span class="wikilink">$1</span><span>]]</span></span>');
             linkNodes(pelm.querySelector('span.wikilink').firstChild);
         }
     }
@@ -126,7 +124,7 @@ async function linkNodes(v: Text) {
             {
                 fn: modes.Unprefixed,
                 opts: [""],
-                main: ["https://en.wikipedia.org/wiki/{path}",'https://anagora.org/{path}']
+                main: ["https://en.wikipedia.org/wiki/{path}", 'https://anagora.org/{path}']
             },
             {
                 fn: modes.Nothing,
@@ -148,9 +146,9 @@ async function linkNodes(v: Text) {
         else {
             if (v.parentNode instanceof HTMLAnchorElement) {
                 v.parentNode.href = res // don't change this to a continue
-                                        // remember the children ;)
-                                        // what did this mean?
-                                        // write less confusing comments please
+                // remember the children ;)
+                // what did this mean?
+                // write less confusing comments please
             }
             else {
                 let parent = v.parentNode;
