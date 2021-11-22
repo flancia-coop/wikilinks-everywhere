@@ -1,5 +1,13 @@
 import browser from 'webextension-polyfill';
 
+const regex = /(?<a>(?:(?:(?:<([^ ]+)(?<e1><.*)>)\[\[(?:<\/\1>))|(?:\[\[))(?:(?:(?:<([^ ]+)(?<e2>.*)>)(?<c>.+?)(?:<\/\2>))|(?<c2>.+?))(?:(?:(?:<([^ ]+)(?<e3>.*)>)\]\](?:<\/\5>))|(?:\]\])))/g;
+// let str = `<span><span>[[</span><a href='${res}' class="wikilink">$1</span > <span>]] < /span></span >`
+
+
+function unique(array, propertyName) {
+    return array.filter((e, i) => array.findIndex(a => a[propertyName] === e[propertyName]) === i);
+}
+
 async function buildAndTestUrl(url: string, page) {
     let nurl = url.replace('{path}', page)
     let sending = await browser.runtime.sendMessage({ url: nurl })
@@ -7,18 +15,18 @@ async function buildAndTestUrl(url: string, page) {
 }
 
 let modes = {
-    'Existing': async function (_opts, _prefixes, node) {
-        if (node.parentNode instanceof HTMLAnchorElement) {
-            let pnode: HTMLAnchorElement = node.parentNode;
+    'Existing': async function (_opts, node, text) {
+        if (node instanceof HTMLAnchorElement) {
+            let pnode: HTMLAnchorElement = node;
             let [status, url] = await buildAndTestUrl(pnode.href, '');
             if (status != 200) return false
             else return url;
         } else return false;
     },
-    'Prefix': async function (opts, prefixes: [{ prefix: string, url: string }], node: Node) {
+    'Prefix': async function (opts, prefixes: [{ prefix: string, url: string }], node: String) {
         for (let prefix of prefixes) {
-            if (node.nodeValue.startsWith(prefix.prefix)) {
-                let betterpath = node.nodeValue.replace(prefix.prefix, '');
+            if (node.startsWith(prefix.prefix)) {
+                let betterpath = node.replace(prefix.prefix, '');
                 let [status, url] = await buildAndTestUrl(prefix.url, betterpath);
                 if (status == 200) {
                     return url;
@@ -31,12 +39,12 @@ let modes = {
     },
     'Unprefixed': async function (opts, urls: [string], node) {
         for (let url of urls) {
-            let [status, turl] = await buildAndTestUrl(url, node.nodeValue);
+            let [status, turl] = await buildAndTestUrl(url, node);
             if (status == 200) return turl;
         } return false;
     },
     'Nothing': function (_opts, _prefixes, node) {
-        return "https://google.com";
+        return false;
     }
 }
 
@@ -46,34 +54,35 @@ function walk(rootNode) {
         rootNode,
         NodeFilter.SHOW_TEXT,
         null,
-    ),
-        node;
+    );
     fixNodes(walker);
 }
 
 async function fixNodes(walker: TreeWalker) {
-    let nodes = [],
-        node: Text;
-    // @ts-expect-error
-    while (node = walker.nextNode()) {
-        nodes.push(node);
+    let tnode,
+        // @ts-ignore
+        nodes: [Text] = [];
+    while (tnode = walker.nextNode()) {
+        nodes.push(tnode);
     }
-    let pelm: Element;
-    for (node of nodes) {
-
-        pelm = node.parentElement
-
-        if (node.parentElement == null) {
-            continue;
-        }
-        if (node.nodeValue.includes('[[') && node.nodeValue.includes(']]')) {
-            node.parentElement.innerHTML = node.parentElement.innerHTML.replace(/\[\[(.*?)\]\]/g, '<span><span>[[</span><span class="wikilink">$1</span><span>]]</span></span>');
-            linkNodes(pelm.querySelector('span.wikilink').firstChild);
+    for (let node of nodes) {
+        let nodes = [...node.textContent.matchAll(regex)]
+        let place = node
+        for (let i in nodes) {
+            let segment = [...place.textContent.matchAll(regex)][i];
+            try {
+                place = place.splitText(segment.index + 2);
+                place = place.splitText(segment.length - 2);
+            } catch (e) {
+                console.log(e)
+                console.log(node.textContent.length)
+            }
         }
     }
 }
 
-async function linkNodes(v: Text) {
+// if you want to submit a PR fixing the swear words ok.
+async function doshitwithnodesandstuff(v: String, node: Text) {
     // TODO: find [[wikilinks]] even if not only thing in a element
     let arr: Array<{
         fn: Function,
@@ -84,7 +93,7 @@ async function linkNodes(v: Text) {
             {
                 fn: modes.Existing,
                 opts: [""],
-                main: ''
+                main: node
             },
             {
                 fn: modes.Prefix,
@@ -144,18 +153,14 @@ async function linkNodes(v: Text) {
             continue
         }
         else {
-            if (v.parentNode instanceof HTMLAnchorElement) {
-                v.parentNode.href = res // don't change this to a continue
+            if (node.parentNode instanceof HTMLAnchorElement) {
+                node.parentNode.href = res // don't change this to a continue
                 // remember the children ;)
                 // what did this mean?
                 // write less confusing comments please
             }
             else {
-                let parent = v.parentNode;
-                let wrapper = document.createElement('a');
-                wrapper.href = res;
-                wrapper.appendChild(v);
-                console.log(wrapper);
+                return res
             }
         }
         break;

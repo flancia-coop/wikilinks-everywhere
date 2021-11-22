@@ -16,7 +16,7 @@ module.exports = {
         extensions: ['.tsx', '.ts', '.js', '.json', '.wasm']
     },
     output: {
-        path: __dirname,
+        path: `${__dirname}/dist`,
         filename: '[name].bundle.js'
     },
     devtool: 'source-map',
