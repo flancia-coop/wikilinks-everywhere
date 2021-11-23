@@ -58,7 +58,7 @@ function walk(rootNode) {
     fixNodes(walker);
 }
 
-async function fixNodes(walker: TreeWalker) {
+function fixNodes(walker: TreeWalker) {
     let tnode,
         // @ts-ignore
         nodes: [Text] = [];
@@ -69,10 +69,10 @@ async function fixNodes(walker: TreeWalker) {
         let nodes = [...node.textContent.matchAll(regex)]
         let place = node
         for (let i in nodes) {
-            let segment = [...place.textContent.matchAll(regex)][i];
+            let segment = [...place.textContent.matchAll(regex)]
             try {
-                place = place.splitText(segment.index + 2);
-                place = place.splitText(segment.length - 2);
+                place = place.splitText(segment[i].index + 2);
+                place = place.splitText([segment[i].groups.c2, segment[i].groups.c].join('').length); // prevent coercion of undefined -> string (why javascript)
             } catch (e) {
                 console.log(e)
                 console.log(node.textContent.length)
