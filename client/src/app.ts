@@ -58,10 +58,13 @@ function walk(rootNode) {
     fixNodes(walker);
 }
 
-function fixNodes(walker: TreeWalker) {
+async function fixNodes(walker: TreeWalker) {
     let tnode,
         // @ts-ignore
         nodes: [Text] = [];
+    // BUG: Sometimes walker becomes undefined!?
+    // TypeError: walker.nextNode is not a function
+    // This better fix itself
     while (tnode = walker.nextNode()) {
         nodes.push(tnode);
     }
@@ -70,12 +73,20 @@ function fixNodes(walker: TreeWalker) {
         let place = node
         for (let i in nodes) {
             let segment = [...place.textContent.matchAll(regex)]
+            let arr = [place] // main datastream
             try {
-                place = place.splitText(segment[i].index + 2);
-                place = place.splitText([segment[i].groups.c2, segment[i].groups.c].join('').length); // prevent coercion of undefined -> string (why javascript)
+                arr.push(arr[0].splitText(segment[i].index + 2));
+                arr[1].splitText([segment[i].groups.c2, segment[i].groups.c].join('').length); // prevent coercion of undefined -> string (why javascript) by using [].join('')
+                arr.push(await doshitwithnodesandstuff(arr[1].textContent, arr[1]))
+                // fancy linkify
+                let parent = arr[1].parentElement;
+                let wrapper = document.createElement('a');
+                wrapper.href = arr[2];
+                wrapper.classList.add('wikilink');
+                parent.replaceChild(wrapper, arr[1]);
+                wrapper.appendChild(arr[1]);
             } catch (e) {
                 console.log(e)
-                console.log(node.textContent.length)
             }
         }
     }
