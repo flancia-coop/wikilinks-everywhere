@@ -59,41 +59,70 @@ function walk(rootNode) {
 }
 
 async function fixNodes(walker: TreeWalker) {
+    console.log("FIX NODES")
     let tnode,
         // @ts-ignore
         nodes: [Text] = [];
     // BUG: Sometimes walker becomes undefined!?
     // TypeError: walker.nextNode is not a function
     // This better fix itself
+    if (!(walker instanceof TreeWalker)) return;
+    // console.log("WALKER", walker, walker instanceof TreeWalker);
     while (tnode = walker.nextNode()) {
         nodes.push(tnode);
     }
     for (let node of nodes) {
-        let nodes = [...node.textContent.matchAll(regex)]
-        let place = node
-        for (let i in nodes) {
-            let segment = [...place.textContent.matchAll(regex)]
-            let arr = [place] // main datastream
+        // console.log("NODE", node)
+        let body = node.textContent
+        let segment = [...node.textContent.matchAll(regex)]
+        if (segment.length == 0) continue;
+        console.log("NODES", node)
+        console.log("SEGMENT", segment)
+        let parent = node.parentElement;
+        console.log("PARENT", parent)
+        
+        for (let piece of segment) {
+            // let arr = [place] // main datastream
             try {
-                arr.push(arr[0].splitText(segment[i].index + 2));
-                arr[1].splitText([segment[i].groups.c2, segment[i].groups.c].join('').length); // prevent coercion of undefined -> string (why javascript) by using [].join('')
-                arr.push(await doshitwithnodesandstuff(arr[1].textContent, arr[1]))
-                // fancy linkify
-                let parent = arr[1].parentElement;
+                // console.log("ARR", arr)
+                console.log("PIECE", piece)
+                // console.log("INDEX", piece.index)
+                
+                // let split = arr[0].splitText(piece[0].length)
+                // console.log("SPLIT", split)
+                // arr.push(split);
+                // console.log("GROUPS",[piece.groups.c2, piece.groups.c].join(''))
+                // let split2 = [piece.groups.c2, piece.groups.c].join('').length
+                // console.log("ARR[1]", arr[1])
+                // console.log("SPLIT2", split2)
+                // arr[1].splitText(split2); // prevent coercion of undefined -> string (why javascript) by using [].join('')
+                // console.log("ARR[1] second", arr[1])
                 let wrapper = document.createElement('a');
-                wrapper.href = arr[2].toString();
+                let shit = await convertToLink(piece[7], node)
+                console.log("SHIT", shit)
+                wrapper.href = shit;
                 wrapper.classList.add('wikilink');
-                parent.replaceChild(wrapper, arr[1]);
-                wrapper.appendChild(arr[1]);
+                wrapper.appendChild(document.createTextNode(piece[0]));
+                body = body.replace(piece[0], wrapper.outerHTML);
+                // fancy linkify
+                // console.log("WRAPPER", wrapper)
             } catch (e) {
-                console.log(e)
+                console.error(e)
             }
         }
+        console.log("BODY", body)
+        let el = document.createElement('span')
+        let frag = document.createRange().createContextualFragment(body);
+        el.appendChild(frag) 
+        console.log("EL", el)
+        // parent.replaceChild(el, node);
+
+
+
     }
 }
 
-// if you want to submit a PR fixing the swear words ok.
-async function doshitwithnodesandstuff(v: String, node: Text) {
+async function convertToLink(v: String, node: Text) {
     // TODO: find [[wikilinks]] even if not only thing in a element
     let arr: Array<{
         fn: Function,
