@@ -38,12 +38,15 @@ let modes = {
         return false
     },
     'Unprefixed': async function (opts, urls: [string], node) {
+        console.log("UNPREFIXED")
         for (let url of urls) {
             let [status, turl] = await buildAndTestUrl(url, node);
+            console.log(status, url, turl)
             if (status == 200) return turl;
         } return false;
     },
     'Nothing': function (_opts, _prefixes, node) {
+        console.log("NOTHING")
         return false;
     }
 }
@@ -59,7 +62,6 @@ function walk(rootNode) {
 }
 
 async function fixNodes(walker: TreeWalker) {
-    console.log("FIX NODES")
     let tnode,
         // @ts-ignore
         nodes: [Text] = [];
@@ -76,46 +78,31 @@ async function fixNodes(walker: TreeWalker) {
         let body = node.textContent
         let segment = [...node.textContent.matchAll(regex)]
         if (segment.length == 0) continue;
-        console.log("NODES", node)
-        console.log("SEGMENT", segment)
-        let parent = node.parentElement;
-        console.log("PARENT", parent)
+        let breaker = node.splitText(1);
+        let parent = breaker.parentElement;
         
         for (let piece of segment) {
-            // let arr = [place] // main datastream
             try {
-                // console.log("ARR", arr)
-                console.log("PIECE", piece)
-                // console.log("INDEX", piece.index)
-                
                 // let split = arr[0].splitText(piece[0].length)
-                // console.log("SPLIT", split)
                 // arr.push(split);
-                // console.log("GROUPS",[piece.groups.c2, piece.groups.c].join(''))
                 // let split2 = [piece.groups.c2, piece.groups.c].join('').length
-                // console.log("ARR[1]", arr[1])
-                // console.log("SPLIT2", split2)
                 // arr[1].splitText(split2); // prevent coercion of undefined -> string (why javascript) by using [].join('')
-                // console.log("ARR[1] second", arr[1])
                 let wrapper = document.createElement('a');
                 let shit = await convertToLink(piece[7], node)
-                console.log("SHIT", shit)
                 wrapper.href = shit;
                 wrapper.classList.add('wikilink');
                 wrapper.appendChild(document.createTextNode(piece[0]));
                 body = body.replace(piece[0], wrapper.outerHTML);
                 // fancy linkify
-                // console.log("WRAPPER", wrapper)
             } catch (e) {
                 console.error(e)
             }
         }
-        console.log("BODY", body)
         let el = document.createElement('span')
+        console.log("BODY", body)
         let frag = document.createRange().createContextualFragment(body);
         el.appendChild(frag) 
-        console.log("EL", el)
-        // parent.replaceChild(el, node);
+        parent.replaceWith(el);
 
 
 
