@@ -81,7 +81,7 @@ async function fixNodes(walker: TreeWalker) {
                 // fancy linkify
                 let parent = arr[1].parentElement;
                 let wrapper = document.createElement('a');
-                wrapper.href = arr[2];
+                wrapper.href = arr[2].toString();
                 wrapper.classList.add('wikilink');
                 parent.replaceChild(wrapper, arr[1]);
                 wrapper.appendChild(arr[1]);
