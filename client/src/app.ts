@@ -38,15 +38,12 @@ let modes = {
         return false
     },
     'Unprefixed': async function (opts, urls: [string], node) {
-        console.log("UNPREFIXED")
         for (let url of urls) {
             let [status, turl] = await buildAndTestUrl(url, node);
-            console.log(status, url, turl)
             if (status == 200) return turl;
         } return false;
     },
     'Nothing': function (_opts, _prefixes, node) {
-        console.log("NOTHING")
         return false;
     }
 }
@@ -62,7 +59,6 @@ function walk(rootNode) {
 }
 
 async function fixNodes(walker: TreeWalker) {
-    console.log("FIXNODES")
     let tnode,
         // @ts-ignore
         nodes: [Text] = [];
@@ -154,7 +150,7 @@ async function convertToLink(v: String, node: Text) {
             {
                 fn: modes.Unprefixed,
                 opts: [""],
-                main: ["https://en.wikipedia.org/wiki/{path}", 'https://anagora.org/{path}']
+                main: [ 'https://anagora.org/{path}', "https://en.wikipedia.org/wiki/{path}"]
             },
             {
                 fn: modes.Nothing,
@@ -174,15 +170,18 @@ async function convertToLink(v: String, node: Text) {
             continue
         }
         else {
-            if (node.parentNode instanceof HTMLAnchorElement) {
-                node.parentNode.href = res // don't change this to a continue
-                // remember the children ;)
-                // what did this mean?
-                // write less confusing comments please
-            }
-            else {
-                return res
-            }
+            // if (node.parentNode instanceof HTMLAnchorElement) {
+            //     node.parentNode.href = res // don't change this to a continue
+            //     // remember the children ;)
+            //     // what did this mean?
+            //     // write less confusing comments please
+            //     console.log("NODE IS ANCHOR")
+            // }
+            // else {
+            //     console.log("RETUERN RES")
+            //     return res
+            // }
+            return res
         }
         break;
     }
