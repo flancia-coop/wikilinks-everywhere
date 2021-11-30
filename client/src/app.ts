@@ -62,6 +62,7 @@ function walk(rootNode) {
 }
 
 async function fixNodes(walker: TreeWalker) {
+    console.log("FIXNODES")
     let tnode,
         // @ts-ignore
         nodes: [Text] = [];
@@ -69,12 +70,10 @@ async function fixNodes(walker: TreeWalker) {
     // TypeError: walker.nextNode is not a function
     // This better fix itself
     if (!(walker instanceof TreeWalker)) return;
-    // console.log("WALKER", walker, walker instanceof TreeWalker);
     while (tnode = walker.nextNode()) {
         nodes.push(tnode);
     }
     for (let node of nodes) {
-        // console.log("NODE", node)
         let body = node.textContent
         let segment = [...node.textContent.matchAll(regex)]
         if (segment.length == 0) continue;
@@ -83,10 +82,6 @@ async function fixNodes(walker: TreeWalker) {
         
         for (let piece of segment) {
             try {
-                // let split = arr[0].splitText(piece[0].length)
-                // arr.push(split);
-                // let split2 = [piece.groups.c2, piece.groups.c].join('').length
-                // arr[1].splitText(split2); // prevent coercion of undefined -> string (why javascript) by using [].join('')
                 let wrapper = document.createElement('a');
                 let shit = await convertToLink(piece[7], node)
                 wrapper.href = shit;
@@ -99,7 +94,6 @@ async function fixNodes(walker: TreeWalker) {
             }
         }
         let el = document.createElement('span')
-        console.log("BODY", body)
         let frag = document.createRange().createContextualFragment(body);
         el.appendChild(frag) 
         parent.replaceWith(el);
